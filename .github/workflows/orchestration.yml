@@ -18,9 +18,15 @@ on:
 jobs:
   orchestrate:
     runs-on: ubuntu-latest
-
+    # environment: orchestrator  # Uncomment to use environment-level secrets
     permissions:
       contents: write
+
+    env:
+      NOSTR_NSEC: ${{ secrets.NOSTR_NSEC }}
+      NOSTR_RELAY: ${{ secrets.NOSTR_RELAY }}
+      AGENT_NAME: ${{ secrets.AGENT_NAME }}
+      TOKEN_TICKER: ${{ secrets.TOKEN_TICKER }}
 
     env:
       NOSTR_NSEC: ${{ secrets.NOSTR_NSEC }}

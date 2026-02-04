@@ -55,16 +55,27 @@ Your repository is already configured with GitHub Actions for automated orchestr
 
 #### **Setup Instructions:**
 
-1. **Set up Repository Secrets:**
-   Go to your GitHub repository → Settings → Secrets and variables → Actions
+**Option 1: Repository Secrets (Recommended for simplicity)**
+Go to your GitHub repository → Settings → Secrets and variables → Actions
 
-   Add these secrets:
-   ```
-   NOSTR_NSEC     → Your Nostr private key (nsec1...)
-   NOSTR_RELAY    → wss://lightningrelay.com
-   AGENT_NAME     → ClawOrchestrator
-   TOKEN_TICKER   → CLAWSTRA
-   ```
+Add these secrets:
+```
+NOSTR_NSEC     → Your Nostr private key (nsec1...)
+NOSTR_RELAY    → wss://lightningrelay.com
+AGENT_NAME     → ClawOrchestrator
+TOKEN_TICKER   → CLAWSTRA
+```
+
+**Option 2: Environment-Based Deployment (Enhanced Security)**
+1. Create environment: Settings → Environments → **New environment** → Name: `orchestrator`
+2. Add secrets to the environment (same secrets as above)
+3. Uncomment `environment: orchestrator` in `.github/workflows/orchestration.yml`
+
+**Benefits of environments:**
+- ✅ **Security isolation**: Secrets scoped to specific environments
+- ✅ **Deployment controls**: Required reviewers, wait timers
+- ✅ **Branch restrictions**: Limit deployments to specific branches
+- ⚠️ **More complex**: Requires additional setup steps
 
 2. **The workflow will:**
    - Run automatically every 6 hours
