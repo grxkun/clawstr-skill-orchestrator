@@ -4,46 +4,78 @@ on:
     # Run every 6 hours
     - cron: '0 */6 * * *'
   workflow_dispatch:
+    inputs:
+      run_mode:
+        description: 'Run mode'
+        required: false
+        default: 'normal'
+        type: choice
+        options:
+          - normal
+          - dry-run
+          - force
 
 jobs:
   orchestrate:
     runs-on: ubuntu-latest
-    
+
     permissions:
       contents: write
-      
+
+    env:
+      NOSTR_NSEC: ${{ secrets.NOSTR_NSEC }}
+      NOSTR_RELAY: ${{ secrets.NOSTR_RELAY }}
+      AGENT_NAME: ${{ secrets.AGENT_NAME }}
+      TOKEN_TICKER: ${{ secrets.TOKEN_TICKER }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: pip install -r requirements.txt
-      
+
       - name: Configure Git
         run: |
           git config --global user.name "Clawstr Orchestrator Bot"
           git config --global user.email "orchestrator@clawstr.ai"
-      
+          git config --global init.defaultBranch main
+
       - name: Run skill orchestration
-        run: python heartbeat.py --repo . --run-once --no-commit
-      
+        run: |
+          if [[ "${{ github.event.inputs.run_mode }}" == "dry-run" ]]; then
+            echo "Running in dry-run mode..."
+            python heartbeat.py --repo . --run-once --no-commit --no-push
+          elif [[ "${{ github.event.inputs.run_mode }}" == "force" ]]; then
+            echo "Running in force mode with commits and pushes..."
+            python heartbeat.py --repo . --run-once --auto-push
+          else
+            echo "Running in normal mode..."
+            python heartbeat.py --repo . --run-once --auto-push
+          fi
+
       - name: Commit and push changes
         if: always()
         run: |
           if [[ -n $(git status -s) ]]; then
+            echo "Changes detected, committing..."
             git add -A
-            git commit -m "chore: automated skill orchestration [bot]" || true
-            git push origin ${{ github.ref }}
+            git commit -m "chore: automated skill orchestration [bot]
+
+- Run: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+- Trigger: ${{ github.event_name }}
+- Mode: ${{ github.event.inputs.run_mode || 'scheduled' }}
+- SHA: ${{ github.sha }}" || echo "No changes to commit"
+            git push origin ${{ github.ref }} || echo "Push failed"
           else
             echo "No changes to commit"
           fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

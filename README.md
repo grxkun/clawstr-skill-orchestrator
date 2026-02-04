@@ -43,14 +43,54 @@ This creates a fully autonomous agent that continuously improves the skill ecosy
 
 ## Deployment Options
 
-### 🚀 Recommended: GitHub Actions (Current)
+### 🚀 GitHub Actions Deployment (Recommended)
 
-The primary deployment method uses GitHub Actions for scheduled orchestration:
+Your repository is already configured with GitHub Actions for automated orchestration. This is the **recommended deployment method** for full functionality.
 
-- ✅ **Continuous Operation**: Runs every 6 hours automatically
-- ✅ **Full Functionality**: All features including git operations, ML clustering
-- ✅ **Cost Effective**: Free tier available
+#### **Current Setup:**
+- ✅ **Automated**: Runs every 6 hours automatically
+- ✅ **Full Features**: Git operations, ML clustering, Nostr broadcasting
+- ✅ **Free**: Uses GitHub's free tier
 - ✅ **Integrated**: Works with GitHub's permission system
+
+#### **Setup Instructions:**
+
+1. **Set up Repository Secrets:**
+   Go to your GitHub repository → Settings → Secrets and variables → Actions
+
+   Add these secrets:
+   ```
+   NOSTR_NSEC     → Your Nostr private key (nsec1...)
+   NOSTR_RELAY    → wss://lightningrelay.com
+   AGENT_NAME     → ClawOrchestrator
+   TOKEN_TICKER   → CLAWOSTRA
+   ```
+
+2. **The workflow will:**
+   - Run automatically every 6 hours
+   - Discover and analyze skills
+   - Consolidate duplicates using ML
+   - Commit and push changes
+   - Broadcast updates to Nostr
+
+3. **Manual Triggers:**
+   You can also trigger runs manually:
+   - Go to Actions tab → "Skill Orchestration" → "Run workflow"
+   - Choose mode: `normal`, `dry-run`, or `force`
+
+#### **Workflow Features:**
+- **Scheduled Runs**: Every 6 hours (`0 */6 * * *`)
+- **Manual Dispatch**: Run on-demand with different modes
+- **Environment Variables**: Securely stored as GitHub secrets
+- **Git Integration**: Automatic commits with detailed messages
+- **Error Handling**: Continues even if individual steps fail
+- **Logging**: Full logs available in Actions tab
+
+#### **Monitoring:**
+- Check the **Actions** tab for run history
+- View detailed logs for each execution
+- See commit history for bot-generated changes
+- Monitor Nostr broadcasts in your relay
 
 ### ☁️ Vercel Deployment (Limited)
 
@@ -84,33 +124,82 @@ NOSTR_RELAY=wss://lightningrelay.com
 AGENT_NAME=ClawOrchestrator
 ```
 
-### 🐳 Docker Deployment
+### � Railway Deployment (Recommended for Full Functionality)
 
-For full functionality in a containerized environment:
+Railway provides full Python application support with persistent storage, background processes, and continuous operation:
 
-```dockerfile
-FROM python:3.10-slim
+#### **Setup:**
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
 
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+# Login to Railway
+railway login
 
-COPY . .
-CMD ["python", "heartbeat.py"]
+# Initialize project
+railway init
+
+# Deploy
+railway up
 ```
+
+#### **Environment Variables:**
+Set these in Railway dashboard (`railway variables`):
+
+```bash
+NOSTR_NSEC=your_private_key_here
+NOSTR_RELAY=wss://lightningrelay.com
+AGENT_NAME=ClawOrchestrator
+TOKEN_TICKER=CLAWOSTRA
+```
+
+#### **Features on Railway:**
+- ✅ **Full Autonomous Operation**: Heartbeat runs continuously
+- ✅ **Git Operations**: Commit and push changes automatically
+- ✅ **ML Processing**: Sentence transformers work normally
+- ✅ **Persistent Storage**: File system persists between runs
+- ✅ **Health Monitoring**: HTTP health checks available
+- ✅ **Background Processes**: Multiple services can run
+
+#### **Access Points:**
+- **Health Check**: `https://your-app.railway.app/health`
+- **Service Info**: `https://your-app.railway.app/`
+- **Logs**: `railway logs`
+
+#### **Scaling:**
+Railway automatically scales based on usage. For production workloads, consider their Pro plan for more resources.
 
 ### 🖥️ Local Development
 
+For development and testing:
+
 ```bash
+# Clone and setup
+git clone https://github.com/yourusername/clawstr-skill-orchestrator.git
+cd clawstr-skill-orchestrator
+
+# Copy environment template
+cp .env.example .env
+# Edit .env with your values
+
 # Install dependencies
 pip install -r requirements.txt
 
-# Run once
-python heartbeat.py --once
+# Test single run
+python heartbeat.py --run-once --no-commit
 
-# Run continuous (development only)
-python heartbeat.py
+# Run continuously (development only)
+python heartbeat.py --interval 1  # Run every hour for testing
+
+# Health check
+python heartbeat.py --health-check
 ```
+
+#### **Development Tips:**
+- Use `--no-commit` for testing without affecting git history
+- Use `--run-once` to test single executions
+- Check logs in `orchestrator_heartbeat.log`
+- Use shorter intervals for faster testing
 
 ### Class Structure
 

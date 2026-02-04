@@ -253,8 +253,18 @@ def main():
         action="store_true",
         help="Register this orchestrator as a Clawstr skill and exit"
     )
+    parser.add_argument(
+        "--health-check",
+        action="store_true",
+        help="Run health check and exit"
+    )
     
     args = parser.parse_args()
+    
+    # Handle health check
+    if args.health_check:
+        print("OK")
+        sys.exit(0)
     
     # Handle Clawstr registration
     if args.register_with_clawstr:

@@ -1,0 +1,11 @@
+[build]
+builder = "dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+# Environment variables will be set in Railway dashboard
+# NOSTR_NSEC, NOSTR_RELAY, AGENT_NAME, etc.
