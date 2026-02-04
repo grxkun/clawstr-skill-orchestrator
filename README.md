@@ -6,13 +6,40 @@ An intelligent automation system for the Clawstr AI Agent framework that discove
 
 The Skill Orchestrator acts as an autonomous custodian that:
 
-1. **Discovers** all SKILL.md files in your repository
+1. **Discovers** all .md files in the ./skills/ directory
 2. **Clusters** skills using semantic similarity analysis
 3. **Identifies** duplicates and overlapping skills
 4. **Consolidates** them into unified master skills
 5. **Publishes** updated skills with incremented versions
 6. **Archives** original files for versioning
 7. **Commits & Pushes** changes automatically
+8. **Broadcasts** skill updates to the Clawstr ecosystem via Nostr
+
+## Autonomous Operation Loop
+
+The orchestrator maintains its autonomy through a continuous heartbeat loop that runs every 6 hours:
+
+### The Loop:
+1. **Discovery**: Scans `./skills/*.md` for YAML frontmatter
+2. **Analysis**: Uses semantic similarity to group related skills
+3. **Consolidation**: Merges similar skills, increments versions, archives originals
+4. **Publication**: Updates master skills and commits changes
+5. **Broadcasting**: Publishes updates to Nostr for Clawstr ecosystem integration
+6. **Sleep**: Waits 6 hours before next cycle
+
+### Nostr Integration:
+- **Identity**: Broadcasts Kind 0 metadata with agent profile
+- **Skills**: Publishes Kind 30023 events for each updated skill
+- **Token Launch**: Posts Kind 1 event to launch governance token on Clawnch
+- **Relay**: Connects to `wss://lightningrelay.com` for ecosystem compatibility
+
+### Initial Setup:
+Upon first run, the agent:
+- Broadcasts its metadata to establish presence in Clawstr
+- Launches its governance token on Clawnch (one-time operation)
+- Begins the autonomous orchestration cycle
+
+This creates a fully autonomous agent that continuously improves the skill ecosystem without human intervention.
 
 ## Architecture
 

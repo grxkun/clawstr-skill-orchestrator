@@ -16,6 +16,8 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from orchestrator import SkillOrchestrator, SkillOrchestratorConfig
+from nostr_client import NostrClient
+from clawnch_launcher import ClawnchLauncher
 
 
 # Configure logging with timestamps
@@ -55,7 +57,72 @@ class HeartbeatOrchestrator:
         self.auto_push = auto_push
         self.last_run = None
         
+        # Perform initial setup
+        self._initial_setup()
+        
         logger.info(f"Heartbeat initialized: interval={interval_hours}h, repo={repo_path}")
+    
+    def _parse_skill_for_nostr(self, skill_path: Path) -> Optional[Dict[str, Any]]:
+        """
+        Parse a skill file to extract data for Nostr publishing.
+        
+        Args:
+            skill_path: Path to the skill markdown file.
+            
+        Returns:
+            Dictionary with skill data for Nostr, or None if parsing failed.
+        """
+        try:
+            import yaml
+            from pathlib import Path
+            
+            content = skill_path.read_text(encoding='utf-8')
+            
+            # Extract YAML frontmatter
+            if content.startswith('---'):
+                end_pos = content.find('---', 3)
+                if end_pos != -1:
+                    frontmatter = content[3:end_pos].strip()
+                    metadata = yaml.safe_load(frontmatter)
+                    
+                    # Extract body content
+                    body = content[end_pos + 3:].strip()
+                    
+                    return {
+                        'title': metadata.get('title', skill_path.stem),
+                        'description': metadata.get('description', ''),
+                        'version': metadata.get('version', '1.0.0'),
+                        'instructions': body,
+                        'tool_calls': metadata.get('tool_calls', []),
+                        'identifier': metadata.get('identifier', f"skill-{skill_path.stem}"),
+                        'category': metadata.get('category', 'general')
+                    }
+            
+            logger.warning(f"No valid frontmatter found in {skill_path}")
+            return None
+            
+        except Exception as e:
+            logger.error(f"Failed to parse skill file {skill_path}: {e}")
+            return None
+    
+    def _initial_setup(self):
+        """Perform initial setup: broadcast metadata and launch token if needed."""
+        try:
+            # Broadcast agent metadata
+            with NostrClient() as nostr_client:
+                nostr_client.broadcast_metadata()
+                logger.info("Broadcasted agent metadata to Nostr")
+            
+            # Launch token if not already done
+            with ClawnchLauncher() as launcher:
+                event_id = launcher.launch_token()
+                if event_id:
+                    logger.info(f"Launched token on Clawnch: {event_id}")
+                else:
+                    logger.info("Token already launched")
+                    
+        except Exception as e:
+            logger.error(f"Initial setup failed: {e}")
     
     def should_run(self) -> bool:
         """
@@ -92,6 +159,25 @@ class HeartbeatOrchestrator:
             )
             
             if result["status"] == "success":
+                # Trigger Nostr updates if skills were published
+                if result.get("skills_published", 0) > 0:
+                    logger.info("Skills were updated. Broadcasting to Nostr...")
+                    try:
+                        with NostrClient() as nostr_client:
+                            # Publish each consolidated skill
+                            for skill_file in result.get("published_files", []):
+                                skill_path = Path(skill_file)
+                                if skill_path.exists():
+                                    # Parse the skill file to get metadata
+                                    skill_data = self._parse_skill_for_nostr(skill_path)
+                                    if skill_data:
+                                        # Determine category (could be enhanced with better logic)
+                                        category = skill_data.get('category', 'general')
+                                        nostr_client.publish_skill(skill_data, category)
+                                        logger.info(f"Published skill to Nostr: {skill_data.get('title')}")
+                    except Exception as e:
+                        logger.error(f"Failed to publish to Nostr: {e}")
+                
                 logger.info(f"Orchestration successful: {result}")
                 self.last_run = datetime.now()
                 return True

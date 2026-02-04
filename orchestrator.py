@@ -111,7 +111,7 @@ class SkillOrchestrator:
         
         self.discovered_skills = []
         
-        for skill_file in target_path.glob("**/SKILL.md"):
+        for skill_file in target_path.glob("**/*.md"):
             try:
                 skill_data = self._parse_skill_file(skill_file)
                 if skill_data:
