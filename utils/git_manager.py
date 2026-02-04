@@ -160,24 +160,18 @@ class GitManager:
         self.repo.heads[branch_name].checkout()
         logger.info(f"Checked out branch: {branch_name}")
     
-    def get_file_history(self, file_path: str, max_count: int = 5) -> List[dict]:
+    def get_remote_url(self, remote: str = "origin") -> Optional[str]:
         """
-        Get commit history for a specific file.
+        Get the URL of a remote repository.
         
         Args:
-            file_path: Path to the file.
-            max_count: Maximum number of commits to retrieve.
+            remote: Remote name (default: origin).
             
         Returns:
-            List of commit info dicts.
+            Remote URL, or None if remote doesn't exist.
         """
-        commits = list(self.repo.iter_commits(paths=file_path, max_count=max_count))
-        return [
-            {
-                "hash": commit.hexsha[:8],
-                "author": str(commit.author),
-                "date": commit.committed_datetime.isoformat(),
-                "message": commit.message.strip()
-            }
-            for commit in commits
-        ]
+        try:
+            return self.repo.remote(remote).url
+        except Exception:
+            logger.warning(f"Remote '{remote}' not found")
+            return None

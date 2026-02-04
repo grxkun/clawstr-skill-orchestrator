@@ -21,6 +21,7 @@ from nostr.filter import Filter, Filters
 from nostr.subscription import Subscription
 
 from dotenv import load_dotenv
+from utils.git_manager import GitManager
 
 # Load environment variables
 load_dotenv()
@@ -40,11 +41,12 @@ class NostrClient:
     - Connection to wss://lightningrelay.com
     """
 
-    def __init__(self):
+    def __init__(self, repo_path: Optional[str] = None):
         """Initialize Nostr client with private key and relay."""
         self.nsec = os.getenv('NOSTR_NSEC')
         self.relay_url = os.getenv('NOSTR_RELAY', 'wss://lightningrelay.com')
         self.agent_name = os.getenv('AGENT_NAME', 'MasterOrchestrator')
+        self.repo_path = repo_path or os.getcwd()
 
         if not self.nsec:
             raise ValueError("NOSTR_NSEC environment variable is required")
@@ -56,6 +58,13 @@ class NostrClient:
         # Initialize relay manager
         self.relay_manager = RelayManager()
         self.relay_manager.add_relay(self.relay_url)
+
+        # Initialize Git manager for autodetecting GitHub repo
+        try:
+            self.git_manager = GitManager(self.repo_path)
+        except ValueError:
+            logger.warning("Not a git repository, GitHub autodetection disabled")
+            self.git_manager = None
 
         logger.info(f"Initialized Nostr client for {self.agent_name}")
 
@@ -70,17 +79,39 @@ class NostrClient:
         self.relay_manager.close_connections()
         logger.info("Disconnected from relay")
 
+    def get_metadata(self) -> Dict[str, str]:
+        """
+        Get agent metadata without broadcasting.
+        
+        Returns:
+            Metadata dictionary with name, about, and website.
+        """
+        # Autodetect GitHub repository URL
+        github_url = "https://github.com/grxkun/clawstr-skill-orchestrator"  # fallback
+        if self.git_manager:
+            remote_url = self.git_manager.get_remote_url()
+            if remote_url:
+                # Convert SSH URL to HTTPS if needed
+                if remote_url.startswith("git@github.com:"):
+                    repo_path = remote_url.replace("git@github.com:", "").replace(".git", "")
+                    github_url = f"https://github.com/{repo_path}"
+                elif remote_url.startswith("https://github.com/"):
+                    github_url = remote_url.replace(".git", "")
+                logger.info(f"Autodetected GitHub repository: {github_url}")
+
+        return {
+            "name": self.agent_name,
+            "about": "Autonomous Master Orchestrator for Clawstr ecosystem. Manages skill consolidation, versioning, and token launches.",
+            "website": github_url
+        }
+
     def broadcast_metadata(self):
         """
         Broadcast Kind 0 (Metadata) event for agent profile.
 
         Sets the agent's name, bio, and GitHub repo link.
         """
-        metadata = {
-            "name": self.agent_name,
-            "about": "Autonomous Master Orchestrator for Clawstr ecosystem. Manages skill consolidation, versioning, and token launches.",
-            "website": "https://github.com/grxkun/clawstr-skill-orchestrator"
-        }
+        metadata = self.get_metadata()
 
         event = Event(
             public_key=self.public_key.hex(),
