@@ -63,7 +63,7 @@ Your repository is already configured with GitHub Actions for automated orchestr
    NOSTR_NSEC     → Your Nostr private key (nsec1...)
    NOSTR_RELAY    → wss://lightningrelay.com
    AGENT_NAME     → ClawOrchestrator
-   TOKEN_TICKER   → CLAWOSTRA
+   TOKEN_TICKER   → CLAWSTRA
    ```
 
 2. **The workflow will:**
@@ -150,7 +150,7 @@ Set these in Railway dashboard (`railway variables`):
 NOSTR_NSEC=your_private_key_here
 NOSTR_RELAY=wss://lightningrelay.com
 AGENT_NAME=ClawOrchestrator
-TOKEN_TICKER=CLAWOSTRA
+TOKEN_TICKER=CLAWSTRA
 ```
 
 #### **Features on Railway:**

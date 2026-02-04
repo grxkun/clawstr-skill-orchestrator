@@ -51,7 +51,7 @@ NOSTR_RELAY=wss://lightningrelay.com
 
 # Agent Configuration
 AGENT_NAME=ClawOrchestrator
-TOKEN_TICKER=CLAWOSTRA
+TOKEN_TICKER=CLAWSTRA
 ```
 
 ### Command Line Options
