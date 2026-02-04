@@ -41,24 +41,75 @@ Upon first run, the agent:
 
 This creates a fully autonomous agent that continuously improves the skill ecosystem without human intervention.
 
-## Architecture
+## Deployment Options
 
-### Core Components
+### 🚀 Recommended: GitHub Actions (Current)
 
+The primary deployment method uses GitHub Actions for scheduled orchestration:
+
+- ✅ **Continuous Operation**: Runs every 6 hours automatically
+- ✅ **Full Functionality**: All features including git operations, ML clustering
+- ✅ **Cost Effective**: Free tier available
+- ✅ **Integrated**: Works with GitHub's permission system
+
+### ☁️ Vercel Deployment (Limited)
+
+For web API access, you can deploy a limited version to Vercel:
+
+#### Setup:
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Deploy
+vercel --prod
 ```
-clawstr-skill-orchestrator/
-├── orchestrator.py              # Main orchestration engine
-├── heartbeat.py                 # Continuous execution scheduler
-├── utils/
-│   ├── nlp_helper.py           # Semantic similarity & clustering
-│   ├── git_manager.py          # Git operations & automation
-│   └── __init__.py
-├── sample_skills/               # Example SKILL.md files
-├── archive/                      # Archived original skills
-├── .github/workflows/
-│   └── orchestration.yml        # GitHub Actions automation
-├── requirements.txt              # Python dependencies
-└── README.md                     # This file
+
+#### Available Endpoints:
+- `GET /health` - Health check
+- `POST /orchestrate` - Trigger skill discovery (read-only)
+- `GET /metadata` - Get agent metadata
+
+#### ⚠️ Limitations:
+- **No Background Processing**: Cannot run continuous heartbeat
+- **No Git Operations**: Cannot commit/push changes
+- **No ML Clustering**: Sentence transformers excluded (too large)
+- **Read-Only**: Can only discover skills, not modify them
+- **Timeout Limits**: 30-second execution limit
+
+#### Environment Variables for Vercel:
+```bash
+NOSTR_NSEC=your_private_key
+NOSTR_RELAY=wss://lightningrelay.com
+AGENT_NAME=ClawOrchestrator
+```
+
+### 🐳 Docker Deployment
+
+For full functionality in a containerized environment:
+
+```dockerfile
+FROM python:3.10-slim
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY . .
+CMD ["python", "heartbeat.py"]
+```
+
+### 🖥️ Local Development
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run once
+python heartbeat.py --once
+
+# Run continuous (development only)
+python heartbeat.py
 ```
 
 ### Class Structure

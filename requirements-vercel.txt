@@ -1,0 +1,9 @@
+Flask==2.3.3
+PyYAML==6.0.1
+GitPython==3.1.40
+python-dotenv==1.0.0
+nostr==0.0.2
+colorama==0.4.6
+tqdm==4.66.1
+# Note: sentence-transformers excluded for Vercel deployment
+# Use lightweight alternative or external ML service
