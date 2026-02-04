@@ -1,0 +1,49 @@
+name: Skill Orchestration
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  orchestrate:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Configure Git
+        run: |
+          git config --global user.name "Clawstr Orchestrator Bot"
+          git config --global user.email "orchestrator@clawstr.ai"
+      
+      - name: Run skill orchestration
+        run: python heartbeat.py --repo . --run-once --no-commit
+      
+      - name: Commit and push changes
+        if: always()
+        run: |
+          if [[ -n $(git status -s) ]]; then
+            git add -A
+            git commit -m "chore: automated skill orchestration [bot]" || true
+            git push origin ${{ github.ref }}
+          else
+            echo "No changes to commit"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
